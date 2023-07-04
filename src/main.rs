@@ -11,6 +11,34 @@ impl Solution {
         return self.puzzle[row][col];
     }
 
+    fn set(&mut self, row: usize, col: usize, num: i8) {
+        self.puzzle[row][col] = num;
+    }
+
+    fn next_empty(&self, mut row: usize, mut col: usize) -> (usize, usize) {
+        if row == 8 && col == 8 {
+            return (10, 10);
+        }
+
+        loop {
+            col += 1;
+
+            if col > 8 {
+                col = 0;
+                row += 1
+            }
+            if row > 8 {
+                return (10, 10);
+            }
+
+            if self.at(row, col) == 0 {
+                return (row, col);
+            }
+        }
+
+        return (row, col);
+    }
+
     fn _print(&self) {
         let mut subsquare_counter = 0;
         println!("+-------+-------+-------+");
@@ -68,8 +96,14 @@ fn init() -> Solution {
 }
 
 fn is_number_possible(p: &Solution, row: usize, col: usize, n: i8) -> bool {
-    println!("Row {row}, Col: {col}, Number: {n}");
     if p.at(row, col) != 0 {
+        return false;
+    }
+    if col > 8 {
+        eprintln!("Out of bounds for col: {col}");
+        return false;
+    } else if row > 8 {
+        eprintln!("Out of bounds for row: {row}");
         return false;
     }
     // check the square
@@ -89,7 +123,6 @@ fn is_number_possible(p: &Solution, row: usize, col: usize, n: i8) -> bool {
     for row_ in square_row..square_row + 3 {
         for col_ in square_col..square_col + 3 {
             if n == p.at(row_, col_) {
-                println!("Num {}, Row: {row_}, Col: {col_}", p.at(row_, col_));
                 return false;
             }
         }
@@ -115,19 +148,53 @@ fn is_number_possible(p: &Solution, row: usize, col: usize, n: i8) -> bool {
     return true;
 }
 
-fn solve() -> Solution {
-    let puzzle = init();
+fn basic_solver(p: &mut Solution) -> bool {
+    // checks to see if there are obvious solutions and outputs true if any were filled
+    let mut row = 0;
+    let mut col = 0;
+    let mut filled = 0;
+    (col, row) = p.next_empty(row, col);
 
-    let x = is_number_possible(&puzzle, 4, 1, 6);
-    println!("{x}");
+    while col != 10 {
+        println!("Row: {row}, Col: {col}");
+        let mut flag = 0;
+        let mut num = 0;
+        for n in 0..9 {
+            if is_number_possible(p, row, col, n) {
+                flag += 1;
+                num = n;
+            }
+        }
+        if flag == 1 {
+            filled += 1;
+            p.set(row, col, num);
+        }
+        (col, row) = p.next_empty(1 + row, col);
+    }
+
+    if filled != 0 {
+        return true;
+    }
+
+    return false;
+}
+
+fn solve() -> Solution {
+    let mut puzzle = init();
+    //let mut puzzle = puzzleinit;
+    puzzle._print();
+
+    let mut solved = basic_solver(&mut puzzle);
+
+    while solved {
+        solved = basic_solver(&mut puzzle);
+    }
 
     return puzzle;
 }
 
 fn main() {
     println!("Sudoku solver");
-    let p = init();
-    p._print();
-    let _sln = solve();
-    //sln._print();
+    let sln = solve();
+    sln._print();
 }
