@@ -35,8 +35,6 @@ impl Solution {
                 return (row, col);
             }
         }
-
-        return (row, col);
     }
 
     fn _print(&self) {
@@ -148,8 +146,67 @@ fn is_number_possible(p: &Solution, row: usize, col: usize, n: i8) -> bool {
     return true;
 }
 
-fn basic_solver(p: &mut Solution) -> bool {
-    // checks to see if there are obvious solutions and outputs true if any were filled
+fn individual_square(p: &mut Solution, row: usize, col: usize) -> bool {
+    // checks an individual square
+    let mut b = false;
+    for row in row..row + 3 {
+        let mut possible = 0;
+        let mut c = 0;
+        let mut n = 0;
+        for num in 0..9 {
+            for col in col..col + 3 {
+                if is_number_possible(p, row, col, num) {
+                    possible += 1;
+                    c = col;
+                    n = num;
+                }
+            }
+        }
+        if possible == 1 {
+            println!("Row: {row}, Col: {c}, Num: {n}");
+            // check just in case
+            if is_number_possible(p, row, c, n) {
+                p.set(row, c, n);
+                b = true;
+            }
+        }
+    }
+    return b;
+}
+
+fn square_option(p: &mut Solution) -> bool {
+    // checks every square to see if there are places where a number has only 1 space to filled
+    let square_row = [0, 3, 6];
+    let square_col = [0, 3, 6];
+    let mut b = false;
+    let mut temp;
+
+    for row in square_row {
+        for col in square_col {
+            temp = individual_square(p, row, col);
+            if (temp == true) {
+                b = true;
+            }
+        }
+    }
+
+    return b;
+}
+
+fn col_option(p: &mut Solution) -> bool {
+    // checks every column to see if there are places where a number only has 1 space to fill
+
+    return false;
+}
+
+fn row_option(p: &mut Solution) -> bool {
+    //
+
+    return false;
+}
+
+fn only_option(p: &mut Solution) -> bool {
+    // checks to see if there are any squares where only 1 number is available
     let mut row = 0;
     let mut col = 0;
     let mut filled = 0;
@@ -184,11 +241,12 @@ fn solve() -> Solution {
     //let mut puzzle = puzzleinit;
     puzzle._print();
 
-    let mut solved = basic_solver(&mut puzzle);
+    let mut solved = only_option(&mut puzzle);
 
     while solved {
-        solved = basic_solver(&mut puzzle);
+        solved = only_option(&mut puzzle);
     }
+    square_option(&mut puzzle);
 
     return puzzle;
 }
