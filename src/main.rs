@@ -2,7 +2,7 @@
 struct Solution {
     puzzle: [[i8; 9]; 9],
     given: i8,
-    // history: Vec<(i8, i8)>,
+    history: Vec<(usize, usize)>,
 }
 
 // Methods
@@ -13,6 +13,13 @@ impl Solution {
 
     fn set(&mut self, row: usize, col: usize, num: i8) {
         self.puzzle[row][col] = num;
+        self.history.push((row, col));
+    }
+
+    fn pop(&mut self, row: usize, col: usize) -> i8 {
+        let num = self.puzzle[row][col];
+        self.puzzle[row][col] = 0;
+        return num;
     }
 
     fn next_empty(&self, mut row: usize, mut col: usize) -> (usize, usize) {
@@ -37,7 +44,7 @@ impl Solution {
         }
     }
 
-    fn _print(&self) {
+    fn pretty_print(&self) {
         let mut subsquare_counter = 0;
         println!("+-------+-------+-------+");
         for row in self.puzzle {
@@ -63,6 +70,18 @@ impl Solution {
         println!("+-------+-------+-------+");
         println!("Squres Left: {}", 81 - self.given);
     }
+
+    fn _ugly_print(&self) {
+        print!("[");
+        for row in self.puzzle {
+            print!("[");
+            for col in row {
+                print!("{col}, ");
+            }
+            print!("]");
+        }
+        print!("]");
+    }
 }
 
 fn init() -> Solution {
@@ -79,7 +98,7 @@ fn init() -> Solution {
             [0, 3, 2, 0, 0, 0, 9, 4, 0],
         ],
         given: 0,
-        //history: vec![],
+        history: vec![],
     };
 
     for row in puzzle.puzzle {
@@ -148,25 +167,25 @@ fn is_number_possible(p: &Solution, row: usize, col: usize, n: i8) -> bool {
 
 fn individual_square(p: &mut Solution, row: usize, col: usize) -> bool {
     // checks an individual square
+    // TODO: Find out why the rows aren't going past 2
     let mut b = false;
-    for row in row..row + 3 {
+    for num in 1..10 {
         let mut possible = 0;
+        let mut r = 0;
         let mut c = 0;
-        let mut n = 0;
-        for num in 0..9 {
+        for row in row..row + 3 {
             for col in col..col + 3 {
                 if is_number_possible(p, row, col, num) {
                     possible += 1;
                     c = col;
-                    n = num;
+                    r = row;
                 }
             }
         }
         if possible == 1 {
-            println!("Row: {row}, Col: {c}, Num: {n}");
             // check just in case
-            if is_number_possible(p, row, c, n) {
-                p.set(row, c, n);
+            if is_number_possible(p, r, c, num) {
+                p.set(r, c, num);
                 b = true;
             }
         }
@@ -184,7 +203,7 @@ fn square_option(p: &mut Solution) -> bool {
     for row in square_row {
         for col in square_col {
             temp = individual_square(p, row, col);
-            if (temp == true) {
+            if temp == true {
                 b = true;
             }
         }
@@ -193,9 +212,9 @@ fn square_option(p: &mut Solution) -> bool {
     return b;
 }
 
+/*
 fn col_option(p: &mut Solution) -> bool {
     // checks every column to see if there are places where a number only has 1 space to fill
-
     return false;
 }
 
@@ -204,29 +223,29 @@ fn row_option(p: &mut Solution) -> bool {
 
     return false;
 }
+*/
 
 fn only_option(p: &mut Solution) -> bool {
-    // checks to see if there are any squares where only 1 number is available
+    // checks to see if there are any places where only 1 number is available
     let mut row = 0;
     let mut col = 0;
     let mut filled = 0;
-    (col, row) = p.next_empty(row, col);
+    (row, col) = p.next_empty(row, col);
 
-    while col != 10 {
-        println!("Row: {row}, Col: {col}");
-        let mut flag = 0;
+    while row != 10 {
+        let mut flag = 0; // counts how many numbers can fit at a spot
         let mut num = 0;
-        for n in 0..9 {
+        for n in 1..10 {
             if is_number_possible(p, row, col, n) {
                 flag += 1;
                 num = n;
             }
         }
         if flag == 1 {
-            filled += 1;
             p.set(row, col, num);
+            filled += 1;
         }
-        (col, row) = p.next_empty(1 + row, col);
+        (row, col) = p.next_empty(row, col);
     }
 
     if filled != 0 {
@@ -236,17 +255,39 @@ fn only_option(p: &mut Solution) -> bool {
     return false;
 }
 
+fn verify_solution(p: &mut Solution) -> bool {
+    for row in 0..9 {
+        for col in 0..9 {
+            let num = p.pop(row, col);
+            if !is_number_possible(&p, row, col, num) {
+                return false;
+            }
+            p.set(row, col, num);
+        }
+    }
+    return true;
+}
+
 fn solve() -> Solution {
     let mut puzzle = init();
-    //let mut puzzle = puzzleinit;
-    puzzle._print();
+    puzzle.pretty_print();
 
-    let mut solved = only_option(&mut puzzle);
-
-    while solved {
-        solved = only_option(&mut puzzle);
-    }
     square_option(&mut puzzle);
+    only_option(&mut puzzle);
+    println!();
+    square_option(&mut puzzle);
+    only_option(&mut puzzle);
+    println!();
+    square_option(&mut puzzle);
+    only_option(&mut puzzle);
+    if !verify_solution(&mut puzzle) {
+        println!("Failed");
+    }
+
+    //let mut solving = only_option(&mut puzzle);
+    //solving = square_option(&mut puzzle);
+    //puzzle.pretty_print();
+    //println!("{solving}");
 
     return puzzle;
 }
@@ -254,5 +295,5 @@ fn solve() -> Solution {
 fn main() {
     println!("Sudoku solver");
     let sln = solve();
-    sln._print();
+    sln.pretty_print();
 }
