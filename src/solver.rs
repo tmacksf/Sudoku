@@ -223,6 +223,29 @@ fn row_option(p: &mut Solution) -> bool {
 }
 */
 
+fn backtracking(p : &mut Solution, mut row : usize, mut col : usize) -> bool{
+    if p.at(row, col) != 0 {
+        (row, col) = p.next_empty(row, col);
+    }
+
+    if row == 10 {
+        return true;
+    }
+
+    for guess in 1..10 {
+        if is_number_possible(p, row, col, guess) {
+            p.set(row, col, guess);
+            if backtracking(p, row, col) {
+                return true;
+            }
+        }
+        // set back to 0
+        p.set(row, col, 0);
+    } 
+    
+    return false;
+}
+
 fn only_option(p: &mut Solution) -> bool {
     // checks to see if there are any places where only 1 number is available
     let mut row = 0;
@@ -271,6 +294,8 @@ pub fn solve() -> Solution {
     puzzle.pretty_print();
 
     let mut can_be_solved = true;
+    backtracking(&mut puzzle, 0, 0);
+    /*
     while can_be_solved {
         if verify_solution(&mut puzzle) {
             break;
@@ -280,9 +305,10 @@ pub fn solve() -> Solution {
         can_be_solved |= only_option(&mut puzzle);
     }
 
-    if !verify_solution {
-        // recursive backtracking solution
+    if verify_solution(&mut puzzle) == false {
+        backtracking(&mut puzzle, 0, 0);
     }
+    */
 
     return puzzle;
 }
